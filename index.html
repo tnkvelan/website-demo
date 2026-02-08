@@ -11,18 +11,38 @@
     <h1>Welcome to the Virtual Agent Test Page</h1>
     <p>The chat widget should appear in the bottom right corner.</p>
 
-    <script src="https://dev271603.service-now.com/scripts/now-requestor-chat-popover-app/now-requestor-chat-popover-app.min.js?sysparm_substitute=false"></script>
-    <script>
-       // Wait for the window to finish loading everything
-    window.addEventListener('load', function() {
+   <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ServiceNow VA Test Site</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Virtual Agent Test Page</h1>
+    <p>The chat widget should appear in the bottom right corner.</p>
+
+   <script src="https://dev271603.service-now.com/scripts/now-requestor-chat-popover-app/now-requestor-chat-popover-app.min.js?sysparm_substitute=false"></script>
+
+<script>
+    // This ensures we wait for the ServiceNow library to be available
+    function initChat() {
         if (typeof ServiceNowChat !== 'undefined') {
+            console.log("ServiceNowChat loaded successfully!");
             new ServiceNowChat({
                 instance: 'https://dev271603.service-now.com'
             });
         } else {
-            console.error("ServiceNowChat library failed to load. Check CORS/CSP.");
+            console.error("ServiceNowChat library failed to load. Please verify CORS and CSP settings in your instance.");
         }
-    });
-    </script>
+    }
+
+    // Run the check after the window has loaded
+    window.onload = initChat;
+</script>
+
 </body>
 </html>
+

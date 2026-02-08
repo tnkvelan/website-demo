@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ServiceNow VA Test Site</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Virtual Agent Test Page</h1>
+    <p>The chat widget should appear in the bottom right corner.</p>
+
+    <script src="https://dev271603.service-now.com/scripts/now-requestor-chat-popover-app/now-requestor-chat-popover-app.min.js?sysparm_substitute=false"></script>
+    <script>
+        new ServiceNowChat({
+            instance: 'https://dev271603.service-now.com'
+        });
+    </script>
+</body>
+</html>

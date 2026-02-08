@@ -13,9 +13,16 @@
 
     <script src="https://dev271603.service-now.com/scripts/now-requestor-chat-popover-app/now-requestor-chat-popover-app.min.js?sysparm_substitute=false"></script>
     <script>
-        new ServiceNowChat({
-            instance: 'https://dev271603.service-now.com'
-        });
+       // Wait for the window to finish loading everything
+    window.addEventListener('load', function() {
+        if (typeof ServiceNowChat !== 'undefined') {
+            new ServiceNowChat({
+                instance: 'https://dev271603.service-now.com'
+            });
+        } else {
+            console.error("ServiceNowChat library failed to load. Check CORS/CSP.");
+        }
+    });
     </script>
 </body>
 </html>

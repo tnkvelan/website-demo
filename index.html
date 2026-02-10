@@ -1,36 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>ServiceNow VA Test Site</title>
+    <title>Virtual Agent Test Page</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+        /* Add some styling to ensure the page doesn't look empty */
+        .content { margin: 0 auto; max-width: 600px; }
     </style>
 </head>
 <body>
-    <h1>Welcome to the Virtual Agent Test Page</h1>
-    <p>The chat widget should appear in the bottom right corner.</p>
 
-   <script src="https://dev271603.service-now.com/scripts/now-requestor-chat-popover-app/now-requestor-chat-popover-app.min.js?sysparm_substitute=false"></script>
+    <div class="content">
+        <h1>Welcome to the Virtual Agent Test Page</h1>
+        <p>The chat widget should appear in the bottom right corner.</p>
+    </div>
 
-<script>
-    // This ensures we wait for the ServiceNow library to be available
-    function initChat() {
-        if (typeof ServiceNowChat !== 'undefined') {
-            console.log("ServiceNowChat loaded successfully!");
-            new ServiceNowChat({
-                instance: 'https://dev271603.service-now.com'
-            });
-        } else {
-            console.error("ServiceNowChat library failed to load. Please verify CORS and CSP settings in your instance.");
-        }
-    }
-
-    // Run the check after the window has loaded
-    window.onload = initChat;
-</script>
-
+    <script type="text/javascript">
+        (function() {
+            window.SN_OW_WIDGET_CONFIG = {
+                instance: "https://dev271603.service-now.com",
+                url_parameters: "sysparm_portal=csp"
+            };
+            var s = document.createElement('script');
+            s.src = "https://dev271603.service-now.com/scripts/sn_ow_chat_widget.js";
+            s.async = true;
+            document.head.appendChild(s);
+        })();
+    </script>
 </body>
 </html>
-
-

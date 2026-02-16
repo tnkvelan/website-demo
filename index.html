@@ -1,4 +1,171 @@
-<!DOCTYPE html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ServiceNow Virtual Agent (Portable Web Client)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- 
+    ======== CONFIGURATION ========
+    Replace with your instance and (optionally) your custom URL.
+    Example: https://acme.service-now.com
+  -->
+  <script>
+    window.__SNOW_VA_CONFIG__ = {
+      instanceUrl: "https://dev271603.service-now.com",    // REQUIRED
+      openOnLoad: false,                                         // auto-open chat on page load
+      popoverPosition: "bottom-right",                           // bottom-right | bottom-left
+      launcherLabel: "Need help?",                                // button label when closed
+      theme: {
+        // Optional lightweight theming
+        // colorPrimary: "#0b5fff",
+        // colorTextOnPrimary: "#ffffff"
+      },
+      // Optional: SSO guard – redirect to your IdP before initializing the widget.
+      // Set to true to require auth; provide your enterprise login URL.
+      requireAuth: false,
+      loginUrl: "https://login.yourcompany.com"
+    };
+  </script>
+
+  <style>
+    /* Minimal styling for the launcher button (in case widget is not auto-rendered) */
+    .va-launcher {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 2147483000;
+      background: #0b5fff;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font: 600 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      cursor: pointer;
+    }
+    .va-launcher:focus { outline: 3px solid #99b7ff; outline-offset: 2px; }
+  </style>
+
+  <!-- 
+    Load the Portable Virtual Agent web client script.
+    NOTE: Keep `sysparm_substitute=false` to prevent URL substitution issues.
+    This script URL format is used in ServiceNow’s official guidance and remains valid in Zurich.
+  -->
+  <script
+    src="https://dev271603.service-now.com/scripts/now-requestor-chat-popover-app/now-requestor-chat-popover-app.min.js?sysparm_substitute=false"
+    defer></script>
+  <!-- Source: ServiceNow community guidance for embedding Portable VA web client. [1](https://techcommunity.microsoft.com/blog/educatordeveloperblog/step-by-step-creating-customized-applications-with-power-virtual-agent-to-empowe/3980820) -->
+</head>
+
+<body>
+  <!-- Optional manual launcher in case you want your own button control -->
+  <button id="open-va" class="va-launcher" type="button" aria-haspopup="dialog">
+    Need help?
+  </button>
+
+  <script>
+    (function () {
+      const cfg = window.__SNOW_VA_CONFIG__;
+      const initVA = () => {
+        if (!window.NowRequestorChatPopoverApp) {
+          console.error("[SNOW VA] Portable client not found on window.");
+          return;
+        }
+
+        // Initialize the Portable VA popover app
+        window.NowRequestorChatPopoverApp.init({
+          instanceUrl: cfg.instanceUrl,                      // REQUIRED
+          // The following options are commonly supported by the Portable client
+          // and can vary by release. Adjust as needed for your Zurich instance.
+          showChatButton: false,                             // we'll use our own button
+          openOnLoad: Boolean(cfg.openOnLoad),
+          popoverPosition: cfg.popoverPosition || "bottom-right",
+          // theme: cfg.theme, // Uncomment if your build supports direct theme injection
+        });
+
+        // Wire up our launcher button to open the chat
+        const btn = document.getElementById("open-va");
+        if (btn) {
+          // Reflect custom label from config
+          if (cfg.launcherLabel) btn.textContent = cfg.launcherLabel;
+
+          btn.addEventListener("click", function () {
+            if (window.NowRequestorChatPopoverApp &&
+                typeof window.NowRequestorChatPopoverApp.open === "function") {
+              window.NowRequestorChatPopoverApp.open();
+            } else {
+              console.warn("[SNOW VA] open() not available yet.");
+            }
+          });
+        }
+      };
+
+      // Optional SSO pre-check — basic pattern:
+      // If requireAuth is true, ping a lightweight endpoint or rely on a cookie check,
+      // then redirect to IdP if the user is not authenticated.
+      async function ensureAuthThenInit() {
+        if (!cfg.requireAuth) {
+          initVA();
+          return;
+        }
+        try {
+          // Replace with a harmless authenticated endpoint on your site or SNOW
+          // e.g., /api/now/table/sys_user?sysparm_limit=1
+          const res = await fetch("/auth/ping", { credentials: "include" });
+          if (res.ok) {
+            initVA();
+          } else {
+            window.location.href = cfg.loginUrl;
+          }
+        } catch (e) {
+          // Network error; route to login as a fail-safe
+          window.location.href = cfg.loginUrl;
+        }
+      }
+
+      // Wait until the Portable client script is loaded (defer) then run
+      if (document.readyState === "complete" || document.readyState === "interactive") {
+        ensureAuthThenInit();
+      } else {
+        document.addEventListener("DOMContentLoaded", ensureAuthThenInit);
+      }
+    })();
+  </script>
+
+  <!--
+    ===================================
+    TROUBLESHOOTING & SECURITY CHECKLIST
+    ===================================
+
+    1) CSP / X-FRAME:
+       - com.glide.cs.embed.csp_frame_ancestors = 'self' https://your-domain.com
+       - com.glide.cs.embed.xframe_options = sameorigin
+       These are required so the chat can be framed/embedded and pass CSP in Zurich.
+       Sources: ServiceNow community articles on embedding VA & SSO. [1](https://techcommunity.microsoft.com/blog/educatordeveloperblog/step-by-step-creating-customized-applications-with-power-virtual-agent-to-empowe/3980820)[2](https://www.youtube.com/watch?v=9fi8CW-FCCQ)
+
+    2) CORS:
+       - Create CORS Rules for your external domain to permit REST calls made by
+         the Portable client (Conversation Consumer Account / chat endpoints).
+       Sources: Community guidance + Zurich-appropriate how-to blogs. [1](https://techcommunity.microsoft.com/blog/educatordeveloperblog/step-by-step-creating-customized-applications-with-power-virtual-agent-to-empowe/3980820)[3](https://rishandigital.com/power-pages/integrating-power-virtual-agents/)
+
+    3) SCRIPT URL:
+       - Use the Portable client script:
+         /scripts/now-requestor-chat-popover-app/now-requestor-chat-popover-app.min.js?sysparm_substitute=false
+       - Keep the full instance base URL and the querystring.
+       Source: Official community article (Tokyo+), still valid in Zurich. [1](https://techcommunity.microsoft.com/blog/educatordeveloperblog/step-by-step-creating-customized-applications-with-power-virtual-agent-to-empowe/3980820)
+
+    4) CUSTOM DOMAIN:
+       - Use your production/custom URL consistently across CSP, CORS, and the script.
+       - Avoid dev instances for long-term external embedding.
+       Sources: ServiceNow community notes. [1](https://techcommunity.microsoft.com/blog/educatordeveloperblog/step-by-step-creating-customized-applications-with-power-virtual-agent-to-empowe/3980820)[2](https://www.youtube.com/watch?v=9fi8CW-FCCQ)
+
+    5) ENGAGEMENT MESSENGER (Alternative):
+       - For CSM sites, you can also embed via Engagement Messenger.
+       Source: Virtualttps://powerappsguide.com/blog/post/beginning-power-virtual-agents)
+  -->
+</body>
+</html><!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -32,3 +199,4 @@
   </script>
 </body>
 </html>
+
